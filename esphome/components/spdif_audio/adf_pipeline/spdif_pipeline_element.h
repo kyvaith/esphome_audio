@@ -24,6 +24,7 @@ class SPDIFStreamWriter : public ADFPipelineSinkElement, public Component {
   void on_settings_request(AudioPipelineSettingsRequest &request) override;
 
   audio_element_handle_t spdif_audio_stream_{nullptr};
+  uint16_t sample_rate_{44100};
 };
 
 }  // namespace spdif_audio

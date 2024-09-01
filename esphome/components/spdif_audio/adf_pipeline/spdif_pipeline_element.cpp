@@ -17,19 +17,17 @@ static const uint16_t CHUNK_SIZE = 1024;
 
 extern "C" {
 esp_err_t spdif_write(const void *buffer, size_t size, TickType_t ticks_to_wait);
-}
-
-extern "C" {
 void spdif_init(int rate);
+void spdif_set_sample_rates(int rate);
 }
 
-static esp_err_t _spdif_open(audio_element_handle_t self){
+static esp_err_t _spdif_open(audio_element_handle_t self) {
   SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
   // esph_log_d(TAG, "_spdif_open");
   return ESP_OK;
 }
 
-static esp_err_t _spdif_close(audio_element_handle_t self){
+static esp_err_t _spdif_close(audio_element_handle_t self) {
   // esph_log_d(TAG, "_spdif_close");
   return ESP_OK;
 }
@@ -63,7 +61,7 @@ static audio_element_err_t _adf_process(audio_element_handle_t self, char *in_bu
 }
 
 bool SPDIFStreamWriter::init_adf_elements_() {
-  esph_log_d(TAG, "init_adf_elements_" );
+  esph_log_d(TAG, "init_adf_elements_");
   if (this->sdk_audio_elements_.size() > 0)
     return true;
 
@@ -76,7 +74,7 @@ bool SPDIFStreamWriter::init_adf_elements_() {
   cfg.write = _spdif_write;
 
   cfg.buffer_len = CHUNK_SIZE;
-  cfg.task_stack = 2 * DEFAULT_ELEMENT_STACK_SIZE; //-1; //3072+512;
+  cfg.task_stack = 2 * DEFAULT_ELEMENT_STACK_SIZE;  //-1; //3072+512;
   cfg.task_prio = 5;
   cfg.task_core = 0;
   cfg.out_rb_size = 4 * CHUNK_SIZE;
@@ -92,13 +90,13 @@ bool SPDIFStreamWriter::init_adf_elements_() {
   sdk_audio_elements_.push_back(this->spdif_audio_stream_);
   sdk_element_tags_.push_back("spdif_out");
 
-  spdif_init(44100);
+  spdif_init(sample_rate_);
 
   return true;
 }
 
 bool SPDIFStreamWriter::preparing_step() {
-  esph_log_d(TAG, "preparing_step" );
+  esph_log_d(TAG, "preparing_step");
   audio_element_state_t curr_state = audio_element_get_state(this->spdif_audio_stream_);
   // esph_log_d(TAG, "SPDIF status: %d", curr_state);
   if (curr_state == AEL_STATE_RUNNING) {
@@ -115,37 +113,36 @@ bool SPDIFStreamWriter::preparing_step() {
 }
 
 bool SPDIFStreamWriter::is_ready() {
-  esph_log_d(TAG, "is_ready" );
+  esph_log_d(TAG, "is_ready");
   return true;
 }
 
-void SPDIFStreamWriter::reset_() {
-  esph_log_d(TAG, "reset_" );
-}
+void SPDIFStreamWriter::reset_() { esph_log_d(TAG, "reset_"); }
 
 void SPDIFStreamWriter::clear_adf_elements_() {
-  esph_log_d(TAG, "clear_adf_elements_" );
+  esph_log_d(TAG, "clear_adf_elements_");
   this->sdk_audio_elements_.clear();
   this->sdk_element_tags_.clear();
 }
 
 void SPDIFStreamWriter::on_settings_request(AudioPipelineSettingsRequest &request) {
-  esph_log_d(TAG, "on_settings_request" );
+  esph_log_d(TAG, "on_settings_request");
   if (!this->spdif_audio_stream_) {
     return;
   }
 
-  if (request.sampling_rate == -1) {
-    return;
+  if (request.sampling_rate > 0 && (uint32_t) request.sampling_rate != this->sample_rate_) {
+    this->sample_rate_ = request.sampling_rate;
+    esph_log_d(TAG, "Setting sample rate to %d", this->sample_rate_);
+    spdif_set_sample_rates(this->sample_rate_);
   }
 
-  // TODO: Allow reconfiguring the sample rate
   if (request.final_sampling_rate == -1) {
-    request.final_sampling_rate = 44100;
+    request.final_sampling_rate = sample_rate_;
     request.final_bit_depth = 16;
     request.final_number_of_channels = 2;
-  } else if (request.final_sampling_rate != 44100 || request.final_bit_depth != 16 ||
-             request.final_number_of_channels != 2) {
+  } else if (request.final_sampling_rate != sample_rate_ || request.final_sampling_rate != sample_rate_ ||
+             request.final_bit_depth != 16 || request.final_number_of_channels != 2) {
     request.failed = true;
     request.failed_by = this;
   }
