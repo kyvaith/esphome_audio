@@ -18,6 +18,7 @@ static const uint16_t CHUNK_SIZE = 1024;
 extern "C" {
 esp_err_t spdif_write(const void *buffer, size_t size, TickType_t ticks_to_wait);
 void spdif_init(int rate);
+void spdif_deinit();
 void spdif_set_sample_rates(int rate);
 }
 
@@ -121,6 +122,7 @@ void SPDIFStreamWriter::reset_() { esph_log_d(TAG, "reset_"); }
 
 void SPDIFStreamWriter::clear_adf_elements_() {
   esph_log_d(TAG, "clear_adf_elements_");
+  spdif_deinit();
   this->sdk_audio_elements_.clear();
   this->sdk_element_tags_.clear();
 }

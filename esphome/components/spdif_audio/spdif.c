@@ -108,6 +108,8 @@ void spdif_init(int rate) {
   spdif_ptr = spdif_buf;
 }
 
+void spdif_deinit() { i2s_driver_uninstall(I2S_NUM); }
+
 // write audio data to I2S buffer
 esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait) {
   const uint8_t *p = src;
@@ -139,6 +141,6 @@ esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait) {
 // change S/PDIF sample rate
 void spdif_set_sample_rates(int rate) {
   // uninstall and reinstall I2S driver for avoiding I2S bug
-  i2s_driver_uninstall(I2S_NUM);
+  spdif_deinit();
   spdif_init(rate);
 }
