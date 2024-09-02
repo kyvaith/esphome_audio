@@ -20,7 +20,6 @@
 #define SPDIF_BUF_DIV 1
 #define DMA_BUF_COUNT 2
 #define DMA_BUF_LEN (SPDIF_BLOCK_SAMPLES * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE / SPDIF_BUF_DIV)
-#define I2S_BUG_MAGIC (26 * 1000 * 1000)  // magic number for avoiding I2S bug
 #define SPDIF_BLOCK_SIZE (SPDIF_BLOCK_SAMPLES * (BMC_BITS_PER_SAMPLE / 8) * I2S_CHANNELS)
 #define SPDIF_BUF_SIZE (SPDIF_BLOCK_SIZE / SPDIF_BUF_DIV)
 #define SPDIF_BUF_ARRAY_SIZE (SPDIF_BUF_SIZE / sizeof(uint32_t))
@@ -79,7 +78,6 @@ static void spdif_buf_init(void) {
 void spdif_init(int rate) {
   int sample_rate = rate * BMC_BITS_FACTOR;
   int bclk = sample_rate * I2S_BITS_PER_SAMPLE * I2S_CHANNELS;
-  int mclk = (I2S_BUG_MAGIC / bclk) * bclk;  // use mclk for avoiding I2S bug
   i2s_config_t i2s_config = {
       .mode = I2S_MODE_MASTER | I2S_MODE_TX,
       .sample_rate = sample_rate,
@@ -91,7 +89,7 @@ void spdif_init(int rate) {
       .dma_buf_len = DMA_BUF_LEN,
       .use_apll = true,
       .tx_desc_auto_clear = true,
-      .fixed_mclk = mclk,  // avoiding I2S bug
+      .fixed_mclk = 0,
   };
   i2s_pin_config_t pin_config = {
       .bck_io_num = -1,
