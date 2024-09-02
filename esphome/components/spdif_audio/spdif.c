@@ -10,7 +10,8 @@
 #include "esp_log.h"
 #include "esphome/core/defines.h"
 
-#define I2S_NUM (0)
+// Allow the i2s_audio component to use the first port
+#define I2S_NUM (I2S_NUM_MAX - 1)
 
 #define I2S_BITS_PER_SAMPLE (32)
 #define I2S_CHANNELS 2
