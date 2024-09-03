@@ -75,6 +75,35 @@ static void spdif_buf_init(void) {
   ESP_LOGI(TAG, "SPDIF buffer initialized to %zu bytes", sizeof(spdif_buf));
 }
 
+#define SPDIF_DEBUG 1
+
+#if SPDIF_DEBUG
+// This is the I2S event queue handle
+QueueHandle_t i2s_event_queue;
+
+void i2s_event_task(void *arg) {
+  i2s_event_t i2s_event;
+  int64_t last_overflow_log_time = 0;
+  int64_t last_tx_done_log_time = 0;
+  // 1 second in microseconds
+  const int64_t min_log_interval_us = 1000000;
+
+  while (1) {
+    if (xQueueReceive(i2s_event_queue, &i2s_event, portMAX_DELAY)) {
+      int64_t current_time = esp_timer_get_time();
+      if (i2s_event.type == I2S_EVENT_TX_Q_OVF) {
+        // I2S DMA sending queue overflowed, the oldest data has been overwritten
+        // by the new data in the DMA buffer
+        if (current_time - last_overflow_log_time >= min_log_interval_us) {
+          ESP_LOGE(TAG, "I2S_EVENT_TX_Q_OVF");
+          last_overflow_log_time = current_time;
+        }
+      }
+    }
+  }
+}
+#endif  // SPDIF_DEBUG
+
 // initialize I2S for S/PDIF transmission
 void spdif_init(int rate) {
   int sample_rate = rate * BMC_BITS_FACTOR;
@@ -99,7 +128,13 @@ void spdif_init(int rate) {
       .data_in_num = -1,
   };
 
+#if SPDIF_DEBUG
+  ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM, &i2s_config, 10, &i2s_event_queue));
+  xTaskCreate(i2s_event_task, "i2s_event_task", 2048, NULL, 10, NULL);
+#else
   ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL));
+#endif
+
   ESP_ERROR_CHECK(i2s_set_pin(I2S_NUM, &pin_config));
 
   // initialize S/PDIF buffer
