@@ -51,10 +51,20 @@ static audio_element_err_t _spdif_write(audio_element_handle_t self, char *buffe
 
 static audio_element_err_t _adf_process(audio_element_handle_t self, char *in_buffer, int in_len) {
   // esph_log_d(TAG, "_adf_process: %d", in_len );
+  SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
   int r_size = audio_element_input(self, in_buffer, in_len);
   int w_size = 0;
 
   if (r_size > 0) {
+    if (this_writer->volume_ < 1.0f) {
+      // Apply volume scaling
+      int16_t *samples = reinterpret_cast<int16_t *>(in_buffer);
+      int num_samples = r_size / sizeof(int16_t);
+      for (int i = 0; i < num_samples; i++) {
+        samples[i] = static_cast<int16_t>(samples[i] * this_writer->volume_);
+      }
+    }
+
     w_size = audio_element_output(self, in_buffer, r_size);
     audio_element_update_byte_pos(self, w_size);
   }
@@ -137,6 +147,11 @@ void SPDIFStreamWriter::on_settings_request(AudioPipelineSettingsRequest &reques
     this->sample_rate_ = request.sampling_rate;
     esph_log_d(TAG, "Setting sample rate to %d", this->sample_rate_);
     spdif_set_sample_rates(this->sample_rate_);
+  }
+
+  if (request.target_volume > 0 && request.target_volume != this->volume_) {
+    this->volume_ = request.target_volume;
+    esph_log_d(TAG, "Setting volume to %.2f", this->volume_);
   }
 
   if (request.final_sampling_rate == -1) {
