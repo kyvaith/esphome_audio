@@ -22,19 +22,19 @@ void spdif_deinit();
 void spdif_set_sample_rates(int rate);
 }
 
-static esp_err_t _spdif_open(audio_element_handle_t self) {
+esp_err_t SPDIFStreamWriter::_spdif_open(audio_element_handle_t self) {
   SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
   // esph_log_d(TAG, "_spdif_open");
   return ESP_OK;
 }
 
-static esp_err_t _spdif_close(audio_element_handle_t self) {
+esp_err_t SPDIFStreamWriter::_spdif_close(audio_element_handle_t self) {
   // esph_log_d(TAG, "_spdif_close");
   return ESP_OK;
 }
 
-static audio_element_err_t _spdif_write(audio_element_handle_t self, char *buffer, int len, TickType_t ticks_to_wait,
-                                        void *context) {
+audio_element_err_t SPDIFStreamWriter::_spdif_write(audio_element_handle_t self, char *buffer, int len,
+                                                    TickType_t ticks_to_wait, void *context) {
   SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
   int bytes_written = 0;
   if (len) {
@@ -49,7 +49,7 @@ static audio_element_err_t _spdif_write(audio_element_handle_t self, char *buffe
   return (audio_element_err_t) bytes_written;
 }
 
-static audio_element_err_t _adf_process(audio_element_handle_t self, char *in_buffer, int in_len) {
+audio_element_err_t SPDIFStreamWriter::_adf_process(audio_element_handle_t self, char *in_buffer, int in_len) {
   // esph_log_d(TAG, "_adf_process: %d", in_len );
   SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
   int r_size = audio_element_input(self, in_buffer, in_len);

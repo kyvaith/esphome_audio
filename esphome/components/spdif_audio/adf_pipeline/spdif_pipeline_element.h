@@ -20,8 +20,13 @@ class SPDIFStreamWriter : public ADFPipelineSinkElement, public Component {
   bool init_adf_elements_() override;
   void clear_adf_elements_() override;
   void reset_() override;
-
   void on_settings_request(AudioPipelineSettingsRequest &request) override;
+
+  static esp_err_t _spdif_open(audio_element_handle_t self);
+  static esp_err_t _spdif_close(audio_element_handle_t self);
+  static audio_element_err_t _spdif_write(audio_element_handle_t self, char *buffer, int len, TickType_t ticks_to_wait,
+                                          void *context);
+  static audio_element_err_t _adf_process(audio_element_handle_t self, char *in_buffer, int in_len);
 
   audio_element_handle_t spdif_audio_stream_{nullptr};
   uint16_t sample_rate_{44100};
