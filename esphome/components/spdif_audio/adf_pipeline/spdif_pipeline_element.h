@@ -29,7 +29,7 @@ class SPDIFStreamWriter : public ADFPipelineSinkElement, public Component {
   static audio_element_err_t _adf_process(audio_element_handle_t self, char *in_buffer, int in_len);
 
   audio_element_handle_t spdif_audio_stream_{nullptr};
-  uint16_t sample_rate_{44100};
+  uint16_t sample_rate_{48000};
   float volume_{1.0f};
 };
 
