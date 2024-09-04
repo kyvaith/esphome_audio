@@ -11,9 +11,9 @@
 #include "esphome/core/defines.h"
 
 // Allow the i2s_audio component to use the first port
-#define I2S_NUM (I2S_NUM_MAX - 1)
+#define I2S_NUM static_cast<i2s_port_t>(I2S_NUM_MAX - 1)
 
-#define I2S_BITS_PER_SAMPLE (32)
+#define I2S_BITS_PER_SAMPLE static_cast<i2s_bits_per_sample_t>(32)
 #define I2S_CHANNELS 2
 #define BMC_BITS_PER_SAMPLE 64
 #define BMC_BITS_FACTOR (BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE)
@@ -31,7 +31,7 @@ static uint32_t *spdif_ptr;
 /*
  * 8bit PCM to 16bit BMC conversion table, LSb first, 1 end
  */
-static const int16_t bmc_tab[256] = {
+static const uint16_t bmc_tab[256] = {
     0x3333, 0xb333, 0xd333, 0x5333, 0xcb33, 0x4b33, 0x2b33, 0xab33, 0xcd33, 0x4d33, 0x2d33, 0xad33, 0x3533, 0xb533,
     0xd533, 0x5533, 0xccb3, 0x4cb3, 0x2cb3, 0xacb3, 0x34b3, 0xb4b3, 0xd4b3, 0x54b3, 0x32b3, 0xb2b3, 0xd2b3, 0x52b3,
     0xcab3, 0x4ab3, 0x2ab3, 0xaab3, 0xccd3, 0x4cd3, 0x2cd3, 0xacd3, 0x34d3, 0xb4d3, 0xd4d3, 0x54d3, 0x32d3, 0xb2d3,
@@ -105,11 +105,11 @@ void i2s_event_task(void *arg) {
 #endif  // SPDIF_DEBUG
 
 // initialize I2S for S/PDIF transmission
-void spdif_init(int rate) {
-  int sample_rate = rate * BMC_BITS_FACTOR;
+void spdif_init(uint32_t rate) {
+  uint32_t sample_rate = rate * BMC_BITS_FACTOR;
   int bclk = sample_rate * I2S_BITS_PER_SAMPLE * I2S_CHANNELS;
   i2s_config_t i2s_config = {
-      .mode = I2S_MODE_MASTER | I2S_MODE_TX,
+      .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX),
       .sample_rate = sample_rate,
       .bits_per_sample = I2S_BITS_PER_SAMPLE,
       .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
@@ -120,8 +120,11 @@ void spdif_init(int rate) {
       .use_apll = true,
       .tx_desc_auto_clear = true,
       .fixed_mclk = 0,
+      .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,
+      .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,
   };
   i2s_pin_config_t pin_config = {
+      .mck_io_num = -1,
       .bck_io_num = -1,
       .ws_io_num = -1,
       .data_out_num = SPDIF_DATA_PIN,
@@ -146,7 +149,7 @@ void spdif_deinit() { i2s_driver_uninstall(I2S_NUM); }
 
 // write audio data to I2S buffer
 esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait) {
-  const uint8_t *p = src;
+  const uint8_t *p = reinterpret_cast<const uint8_t *>(src);
 
   while (p < (uint8_t *) src + size) {
     // convert PCM 16bit data to BMC 32bit pulse pattern
@@ -173,7 +176,7 @@ esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait) {
 }
 
 // change S/PDIF sample rate
-void spdif_set_sample_rates(int rate) {
+void spdif_set_sample_rates(uint32_t rate) {
   // uninstall and reinstall I2S driver for avoiding I2S bug
   spdif_deinit();
   spdif_init(rate);

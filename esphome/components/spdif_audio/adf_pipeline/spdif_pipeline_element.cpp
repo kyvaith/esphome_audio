@@ -15,13 +15,6 @@ namespace spdif_audio {
 static const char *const TAG = "adf_spdif_audio";
 static const uint16_t CHUNK_SIZE = 1024;
 
-extern "C" {
-esp_err_t spdif_write(const void *buffer, size_t size, TickType_t ticks_to_wait);
-void spdif_init(int rate);
-void spdif_deinit();
-void spdif_set_sample_rates(int rate);
-}
-
 esp_err_t SPDIFStreamWriter::_spdif_open(audio_element_handle_t self) {
   SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
   // esph_log_d(TAG, "_spdif_open");

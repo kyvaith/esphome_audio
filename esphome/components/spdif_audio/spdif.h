@@ -14,7 +14,7 @@
  * initialize S/PDIF driver
  *   rate: sampling rate, 44100Hz, 48000Hz etc.
  */
-void spdif_init(int rate);
+void spdif_init(uint32_t rate);
 
 void spdif_deinit();
 
@@ -29,4 +29,4 @@ esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait);
  * change sampling rate
  *   rate: sampling rate, 44100Hz, 48000Hz etc.
  */
-void spdif_set_sample_rates(int rate);
+void spdif_set_sample_rates(uint32_t rate);
