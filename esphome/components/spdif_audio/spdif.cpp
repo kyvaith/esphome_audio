@@ -153,7 +153,9 @@ esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait) {
 
   while (p < (uint8_t *) src + size) {
     // convert PCM 16bit data to BMC 32bit pulse pattern
-    *(spdif_ptr + 1) = (uint32_t) (((bmc_tab[*p] << 16) ^ bmc_tab[*(p + 1)]) << 1) >> 1;
+    // We cast to int16_t to avoid sign extension issues when XOR-ing
+    *(spdif_ptr + 1) =
+        (uint32_t) (((static_cast<int16_t>(bmc_tab[*p]) << 16) ^ static_cast<int16_t>(bmc_tab[*(p + 1)])) << 1) >> 1;
 
     p += 2;
     spdif_ptr += 2;  // advance to next audio data
