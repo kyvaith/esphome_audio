@@ -18,17 +18,13 @@ namespace spdif_audio {
 // Allow the i2s_audio component to use the first port
 #define I2S_NUM static_cast<i2s_port_t>(I2S_NUM_MAX - 1)
 
-#define I2S_BITS_PER_SAMPLE static_cast<i2s_bits_per_sample_t>(32)
-#define I2S_CHANNELS 2
-#define BMC_BITS_PER_SAMPLE 64
-#define BMC_BITS_FACTOR (BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE)
+#define I2S_BITS_PER_SAMPLE static_cast<i2s_bits_per_sample_t>(32)  // Stereo 16-bit PCM
+#define BMC_BITS_PER_SAMPLE 64                                      // Stereo 32-bit BMC
 #define SPDIF_BLOCK_SAMPLES 192
-#define SPDIF_BUF_DIV 1
-#define DMA_BUF_COUNT 2
-#define DMA_BUF_LEN (SPDIF_BLOCK_SAMPLES * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE / SPDIF_BUF_DIV)
-#define SPDIF_BLOCK_SIZE (SPDIF_BLOCK_SAMPLES * (BMC_BITS_PER_SAMPLE / 8) * I2S_CHANNELS)
-#define SPDIF_BUF_SIZE (SPDIF_BLOCK_SIZE / SPDIF_BUF_DIV)
-#define SPDIF_BUF_ARRAY_SIZE (SPDIF_BUF_SIZE / sizeof(uint32_t))
+#define SPDIF_BLOCK_SIZE (SPDIF_BLOCK_SAMPLES * (BMC_BITS_PER_SAMPLE / 8))
+#define SPDIF_BUF_ARRAY_SIZE (SPDIF_BLOCK_SIZE / sizeof(uint32_t))  // One block, 1536 bytes
+#define DMA_BUF_COUNT 4
+#define DMA_BUF_LEN (SPDIF_BLOCK_SAMPLES * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE)  // One block
 
 static uint32_t spdif_buf[SPDIF_BUF_ARRAY_SIZE];
 static uint32_t *spdif_ptr;
@@ -111,7 +107,7 @@ void i2s_event_task(void *arg) {
 
 // initialize I2S for S/PDIF transmission
 void spdif_init(uint32_t rate) {
-  uint32_t sample_rate = rate * BMC_BITS_FACTOR;
+  uint32_t sample_rate = rate * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE;
   i2s_config_t i2s_config = {
       .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX),
       .sample_rate = sample_rate,
