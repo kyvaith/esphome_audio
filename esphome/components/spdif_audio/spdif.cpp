@@ -11,6 +11,7 @@
 #include "driver/i2s.h"
 #include "esphome/core/defines.h"
 #include "esphome/core/log.h"
+#include <cstring>
 
 namespace esphome {
 namespace spdif_audio {
@@ -62,7 +63,9 @@ static const uint16_t bmc_tab[256] = {
 #define SYNC_OFFSET 2  // byte offset of SYNC
 #define SYNC_FLIP ((BMC_B ^ BMC_M) >> (SYNC_OFFSET * 8))
 
-uint16_t silence[SPDIF_BLOCK_SAMPLES * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE];
+#if SPDIF_FILL_SILENCE
+int16_t silence[SPDIF_BLOCK_SAMPLES * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE];
+#endif
 
 static const char *const TAG = "spdif";
 
@@ -74,8 +77,11 @@ static void spdif_buf_init(void) {
   for (i = 0; i < SPDIF_BUF_ARRAY_SIZE; i += 2) {
     spdif_buf[i] = bmc_mw ^= BMC_MW_DIF;
   }
-  // 1536
   esph_log_i(TAG, "SPDIF buffer initialized to %zu bytes", sizeof(spdif_buf));
+
+#if SPDIF_FILL_SILENCE
+  memset(silence, 0, sizeof(silence));
+#endif
 }
 
 #define SPDIF_DEBUG 1
@@ -107,8 +113,11 @@ void i2s_event_task(void *arg) {
           esph_log_e(TAG, "I2S_EVENT_TX_Q_OVF");
           last_overflow_log_time = current_time;
         }
-        // Queue a DMA buffer full of silence when we don't have anything else
-        spdif_write(silence, sizeof(silence), pdMS_TO_TICKS(4));
+#if SPDIF_FILL_SILENCE
+        // Queue DMA a couple buffers full of silence when we don't have anything else to play
+        spdif_write(silence, sizeof(silence), 0);
+        spdif_write(silence, sizeof(silence), 0);
+#endif
       }
     }
   }
@@ -119,19 +128,23 @@ void i2s_event_task(void *arg) {
 void spdif_init(uint32_t rate) {
   uint32_t sample_rate = rate * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE;
   i2s_config_t i2s_config = {
-      .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX),
-      .sample_rate = sample_rate,
-      .bits_per_sample = I2S_BITS_PER_SAMPLE,
-      .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-      .communication_format = I2S_COMM_FORMAT_STAND_I2S,
-      .intr_alloc_flags = 0,
-      .dma_buf_count = DMA_BUF_COUNT,
-      .dma_buf_len = DMA_BUF_LEN,
-      .use_apll = true,
-      .tx_desc_auto_clear = true,
-      .fixed_mclk = 0,
-      .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,
-      .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,
+    .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX),
+    .sample_rate = sample_rate,
+    .bits_per_sample = I2S_BITS_PER_SAMPLE,
+    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+    .communication_format = I2S_COMM_FORMAT_STAND_I2S,
+    .intr_alloc_flags = 0,
+    .dma_buf_count = DMA_BUF_COUNT,
+    .dma_buf_len = DMA_BUF_LEN,
+    .use_apll = true,
+#if SPDIF_FILL_SILENCE
+    .tx_desc_auto_clear = false,
+#else
+    .tx_desc_auto_clear = true,
+#endif
+    .fixed_mclk = 0,
+    .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,
+    .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,
   };
   i2s_pin_config_t pin_config = {
       .mck_io_num = -1,
