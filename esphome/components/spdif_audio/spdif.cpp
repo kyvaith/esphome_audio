@@ -62,6 +62,8 @@ static const uint16_t bmc_tab[256] = {
 #define SYNC_OFFSET 2  // byte offset of SYNC
 #define SYNC_FLIP ((BMC_B ^ BMC_M) >> (SYNC_OFFSET * 8))
 
+uint16_t silence[SPDIF_BLOCK_SAMPLES * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE];
+
 static const char *const TAG = "spdif";
 
 // initialize S/PDIF buffer
@@ -84,21 +86,29 @@ QueueHandle_t i2s_event_queue;
 
 void i2s_event_task(void *arg) {
   i2s_event_t i2s_event;
+  int64_t last_error_log_time = 0;
   int64_t last_overflow_log_time = 0;
-  int64_t last_tx_done_log_time = 0;
   // 1 second in microseconds
   const int64_t min_log_interval_us = 1000000;
 
   while (1) {
     if (xQueueReceive(i2s_event_queue, &i2s_event, portMAX_DELAY)) {
       int64_t current_time = esp_timer_get_time();
-      if (i2s_event.type == I2S_EVENT_TX_Q_OVF) {
+
+      if (i2s_event.type == I2S_EVENT_DMA_ERROR) {
+        if (current_time - last_error_log_time >= min_log_interval_us) {
+          esph_log_e(TAG, "I2S_EVENT_DMA_ERROR");
+          last_error_log_time = current_time;
+        }
+      } else if (i2s_event.type == I2S_EVENT_TX_Q_OVF) {
         // I2S DMA sending queue overflowed, the oldest data has been overwritten
         // by the new data in the DMA buffer
         if (current_time - last_overflow_log_time >= min_log_interval_us) {
           esph_log_e(TAG, "I2S_EVENT_TX_Q_OVF");
           last_overflow_log_time = current_time;
         }
+        // Queue a DMA buffer full of silence when we don't have anything else
+        spdif_write(silence, sizeof(silence), pdMS_TO_TICKS(4));
       }
     }
   }
@@ -174,6 +184,37 @@ esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait) {
       spdif_ptr = spdif_buf;
     }
   }
+
+#if SPDIF_DEBUG
+  static uint64_t total_bytes = 0;
+  static uint64_t last_log_time = 0;
+  static uint64_t last_log_bytes = 0;
+
+  total_bytes += size;
+  int64_t current_time = esp_timer_get_time();
+
+  if (last_log_time == 0) {
+    last_log_time = current_time;
+    last_log_bytes = total_bytes;
+  }
+
+  // Check if it's time to log sample statistics (every minute)
+  if (current_time - last_log_time >= 60000000) {
+    uint64_t elapsed_time = current_time - last_log_time;
+    uint64_t bytes_since_last_log = total_bytes - last_log_bytes;
+    // 4 bytes per 16-bit stereo sample
+    uint64_t samples = bytes_since_last_log / 4;
+    float seconds = elapsed_time / 1000000.0f;
+    float hz = samples / seconds;
+
+    esph_log_d(TAG, "%llu samples in %.2fs (%.2fHz)", samples, seconds, hz);
+
+    // Reset for next log
+    last_log_time = current_time;
+    last_log_bytes = total_bytes;
+  }
+#endif
+
   return ESP_OK;
 }
 
