@@ -2,7 +2,6 @@
 
 #ifdef USE_ESP_IDF
 #include "esphome/core/component.h"
-#include "esphome/core/log.h"
 
 #include "esphome/components/adf_pipeline/adf_audio_sinks.h"
 

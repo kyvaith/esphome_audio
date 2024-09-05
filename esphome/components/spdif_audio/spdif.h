@@ -10,6 +10,9 @@
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 
+namespace esphome {
+namespace spdif_audio {
+
 /*
  * initialize S/PDIF driver
  *   rate: sampling rate, 44100Hz, 48000Hz etc.
@@ -30,3 +33,6 @@ esp_err_t spdif_write(const void *src, size_t size, TickType_t ticks_to_wait);
  *   rate: sampling rate, 44100Hz, 48000Hz etc.
  */
 void spdif_set_sample_rates(uint32_t rate);
+
+}  // namespace spdif_audio
+}  // namespace esphome

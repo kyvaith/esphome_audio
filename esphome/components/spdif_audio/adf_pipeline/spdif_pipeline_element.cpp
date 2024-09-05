@@ -4,9 +4,9 @@
 
 #include "../../adf_pipeline/adf_pipeline.h"
 #include "freertos/event_groups.h"
-
 #include "../../adf_pipeline/sdk_ext.h"
 #include "../spdif.h"
+#include "esphome/core/log.h"
 
 namespace esphome {
 using namespace esp_adf;

@@ -5,10 +5,15 @@
     software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, either express or implied.
 */
+#include "spdif.h"
+
 #include "freertos/FreeRTOS.h"
 #include "driver/i2s.h"
-#include "esp_log.h"
 #include "esphome/core/defines.h"
+#include "esphome/core/log.h"
+
+namespace esphome {
+namespace spdif_audio {
 
 // Allow the i2s_audio component to use the first port
 #define I2S_NUM static_cast<i2s_port_t>(I2S_NUM_MAX - 1)
@@ -72,7 +77,7 @@ static void spdif_buf_init(void) {
     spdif_buf[i] = bmc_mw ^= BMC_MW_DIF;
   }
   // 1536
-  ESP_LOGI(TAG, "SPDIF buffer initialized to %zu bytes", sizeof(spdif_buf));
+  esph_log_i(TAG, "SPDIF buffer initialized to %zu bytes", sizeof(spdif_buf));
 }
 
 #define SPDIF_DEBUG 1
@@ -95,7 +100,7 @@ void i2s_event_task(void *arg) {
         // I2S DMA sending queue overflowed, the oldest data has been overwritten
         // by the new data in the DMA buffer
         if (current_time - last_overflow_log_time >= min_log_interval_us) {
-          ESP_LOGE(TAG, "I2S_EVENT_TX_Q_OVF");
+          esph_log_e(TAG, "I2S_EVENT_TX_Q_OVF");
           last_overflow_log_time = current_time;
         }
       }
@@ -107,7 +112,6 @@ void i2s_event_task(void *arg) {
 // initialize I2S for S/PDIF transmission
 void spdif_init(uint32_t rate) {
   uint32_t sample_rate = rate * BMC_BITS_FACTOR;
-  int bclk = sample_rate * I2S_BITS_PER_SAMPLE * I2S_CHANNELS;
   i2s_config_t i2s_config = {
       .mode = static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX),
       .sample_rate = sample_rate,
@@ -183,3 +187,6 @@ void spdif_set_sample_rates(uint32_t rate) {
   spdif_deinit();
   spdif_init(rate);
 }
+
+}  // namespace spdif_audio
+}  // namespace esphome
