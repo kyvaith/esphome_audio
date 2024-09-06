@@ -67,6 +67,8 @@ static const uint16_t bmc_tab[256] = {
 int16_t silence[SPDIF_BLOCK_SAMPLES * BMC_BITS_PER_SAMPLE / I2S_BITS_PER_SAMPLE];
 #endif
 
+QueueHandle_t i2s_event_queue;
+
 static const char *const TAG = "spdif";
 
 // initialize S/PDIF buffer
@@ -84,12 +86,6 @@ static void spdif_buf_init(void) {
 #endif
 }
 
-#define SPDIF_DEBUG 1
-
-#if SPDIF_DEBUG
-// This is the I2S event queue handle
-QueueHandle_t i2s_event_queue;
-
 void i2s_event_task(void *arg) {
   i2s_event_t i2s_event;
   int64_t last_error_log_time = 0;
@@ -102,17 +98,21 @@ void i2s_event_task(void *arg) {
       int64_t current_time = esp_timer_get_time();
 
       if (i2s_event.type == I2S_EVENT_DMA_ERROR) {
+#if SPDIF_DEBUG
         if (current_time - last_error_log_time >= min_log_interval_us) {
           esph_log_e(TAG, "I2S_EVENT_DMA_ERROR");
           last_error_log_time = current_time;
         }
+#endif
       } else if (i2s_event.type == I2S_EVENT_TX_Q_OVF) {
         // I2S DMA sending queue overflowed, the oldest data has been overwritten
         // by the new data in the DMA buffer
+#if SPDIF_DEBUG
         if (current_time - last_overflow_log_time >= min_log_interval_us) {
           esph_log_e(TAG, "I2S_EVENT_TX_Q_OVF");
           last_overflow_log_time = current_time;
         }
+#endif
 #if SPDIF_FILL_SILENCE
         // Queue DMA a couple buffers full of silence when we don't have anything else to play
         spdif_write(silence, sizeof(silence), 0);
@@ -122,7 +122,6 @@ void i2s_event_task(void *arg) {
     }
   }
 }
-#endif  // SPDIF_DEBUG
 
 // initialize I2S for S/PDIF transmission
 void spdif_init(uint32_t rate) {
@@ -154,7 +153,7 @@ void spdif_init(uint32_t rate) {
       .data_in_num = -1,
   };
 
-#if SPDIF_DEBUG
+#if SPDIF_DEBUG || SPDIF_FILL_SILENCE
   ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM, &i2s_config, 10, &i2s_event_queue));
   xTaskCreate(i2s_event_task, "i2s_event_task", 2048, NULL, 10, NULL);
 #else
