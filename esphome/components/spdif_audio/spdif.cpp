@@ -115,6 +115,7 @@ void i2s_event_task(void *arg) {
 #endif
 #if SPDIF_FILL_SILENCE
         // Queue DMA a couple buffers full of silence when we don't have anything else to play
+        spdif_ptr = spdif_buf;
         spdif_write(silence, sizeof(silence), 0);
         spdif_write(silence, sizeof(silence), 0);
 #endif

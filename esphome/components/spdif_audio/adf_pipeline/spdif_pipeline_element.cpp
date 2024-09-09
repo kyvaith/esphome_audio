@@ -13,7 +13,8 @@ using namespace esp_adf;
 namespace spdif_audio {
 
 static const char *const TAG = "adf_spdif_audio";
-static const uint16_t CHUNK_SIZE = 1024;
+// 192 stereo samples at 16-bit. One full SPDIF frame worth of audio.
+static const uint16_t CHUNK_SIZE = 768;
 
 esp_err_t SPDIFStreamWriter::_spdif_open(audio_element_handle_t self) {
   SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
