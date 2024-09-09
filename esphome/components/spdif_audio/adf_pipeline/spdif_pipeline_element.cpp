@@ -85,7 +85,7 @@ bool SPDIFStreamWriter::init_adf_elements_() {
   cfg.out_rb_size = 4 * CHUNK_SIZE;
   cfg.data = nullptr;
   cfg.tag = "spdifwriter";
-  cfg.stack_in_ext = true;
+  cfg.stack_in_ext = false;
   cfg.multi_out_rb_num = 0;
   cfg.multi_in_rb_num = 0;
 
