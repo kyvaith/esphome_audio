@@ -99,23 +99,6 @@ bool SPDIFStreamWriter::init_adf_elements_() {
   return true;
 }
 
-bool SPDIFStreamWriter::preparing_step() {
-  esph_log_d(TAG, "preparing_step");
-  audio_element_state_t curr_state = audio_element_get_state(this->spdif_audio_stream_);
-  // esph_log_d(TAG, "SPDIF status: %d", curr_state);
-  if (curr_state == AEL_STATE_RUNNING) {
-    audio_element_pause(this->spdif_audio_stream_);
-  } else if (curr_state != AEL_STATE_PAUSED) {
-    if (audio_element_run(this->spdif_audio_stream_) != ESP_OK) {
-      esph_log_e(TAG, "Starting SPDIF stream element failed");
-    }
-    if (audio_element_pause(this->spdif_audio_stream_)) {
-      esph_log_e(TAG, "Pausing SPDIF stream element failed");
-    }
-  }
-  return true;
-}
-
 bool SPDIFStreamWriter::is_ready() {
   esph_log_d(TAG, "is_ready");
   return true;
