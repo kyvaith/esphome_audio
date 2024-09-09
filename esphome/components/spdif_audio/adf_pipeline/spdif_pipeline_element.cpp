@@ -16,8 +16,8 @@ static const char *const TAG = "adf_spdif_audio";
 // 192 stereo samples at 16-bit. One full SPDIF frame worth of audio.
 static const uint16_t CHUNK_SIZE = 768;
 
+// Must exist or the pipeline does not start
 esp_err_t SPDIFStreamWriter::_spdif_open(audio_element_handle_t self) {
-  SPDIFStreamWriter *this_writer = (SPDIFStreamWriter *) audio_element_getdata(self);
   // esph_log_d(TAG, "_spdif_open");
   return ESP_OK;
 }
@@ -99,13 +99,6 @@ bool SPDIFStreamWriter::init_adf_elements_() {
 
   return true;
 }
-
-bool SPDIFStreamWriter::is_ready() {
-  esph_log_d(TAG, "is_ready");
-  return true;
-}
-
-void SPDIFStreamWriter::reset_() { esph_log_d(TAG, "reset_"); }
 
 void SPDIFStreamWriter::clear_adf_elements_() {
   esph_log_d(TAG, "clear_adf_elements_");

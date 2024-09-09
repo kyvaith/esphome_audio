@@ -12,13 +12,10 @@ namespace spdif_audio {
 class SPDIFStreamWriter : public ADFPipelineSinkElement, public Component {
  public:
   const std::string get_name() override { return "SPDIF-Audio-Out"; }
-  bool is_ready() override;
-  bool preparing_step();
 
  protected:
   bool init_adf_elements_() override;
   void clear_adf_elements_() override;
-  void reset_() override;
   void on_settings_request(AudioPipelineSettingsRequest &request) override;
 
   static esp_err_t _spdif_open(audio_element_handle_t self);
