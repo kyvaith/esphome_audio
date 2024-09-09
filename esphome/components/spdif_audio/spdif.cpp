@@ -145,6 +145,14 @@ void spdif_init(uint32_t rate) {
     .fixed_mclk = 0,
     .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,
     .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,
+#if SOC_I2S_SUPPORTS_TDM
+    .chan_mask = I2S_CHANNEL_MONO,
+    .total_chan = 0,
+    .left_align = false,
+    .big_edin = false,
+    .bit_order_msb = false,
+    .skip_msk = false,
+#endif
   };
   i2s_pin_config_t pin_config = {
       .mck_io_num = -1,
@@ -156,7 +164,7 @@ void spdif_init(uint32_t rate) {
 
 #if SPDIF_DEBUG || SPDIF_FILL_SILENCE
   ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM, &i2s_config, 10, &i2s_event_queue));
-  xTaskCreate(i2s_event_task, "i2s_event_task", 2048, NULL, 10, NULL);
+  xTaskCreate(i2s_event_task, "i2s_event_task", 3072, NULL, 10, NULL);
 #else
   ESP_ERROR_CHECK(i2s_driver_install(I2S_NUM, &i2s_config, 0, NULL));
 #endif
