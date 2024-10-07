@@ -105,13 +105,13 @@ async def to_code(config):
 
     esp32.add_extra_build_file(
         "esp_adf_patches/idf_v4.4_freertos.patch",
-        "https://github.com/espressif/esp-adf/raw/v2.7/idf_patches/idf_v4.4_freertos.patch",
+        "https://github.com/espressif/esp-adf/raw/v2.5/idf_patches/idf_v4.4_freertos.patch",
     )
 
     add_idf_component(
         name="mdns",
         repo="https://github.com/espressif/esp-adf.git",
-        ref="v2.7",
+        ref="v2.5",
         path="components",
         submodules=["components/esp-adf-libs", "components/esp-sr"],
         components=[
