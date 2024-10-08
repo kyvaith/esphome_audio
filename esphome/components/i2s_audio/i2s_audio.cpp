@@ -138,7 +138,7 @@ void I2SSettings::dump_i2s_settings() const {
   else{
     esph_log_config(TAG, "I2S-Writer (%s):", init_str.c_str());
   }
-  esph_log_config(TAG, "  sample-rate: %d bits_per_sample: %ld", this->sample_rate_, this->bits_per_sample_ );
+  esph_log_config(TAG, "  sample-rate: %ld bits_per_sample: %l=d", this->sample_rate_, this->bits_per_sample_ );
   esph_log_config(TAG, "  channel_fmt: %d channels: %d", this->channel_fmt_, this->num_of_channels() );
   esph_log_config(TAG, "  use_apll: %s, use_pdm: %s", this->use_apll_ ? "yes": "no", this->pdm_ ? "yes": "no");
 }
