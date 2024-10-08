@@ -12,7 +12,7 @@ static const char *const TAG = "i2s_audio";
 void I2SAudioComponent::setup() {
   static i2s_port_t next_port_num = I2S_NUM_0;
 
-  if (next_port_num >= I2S_NUM_MAX) {
+  if (next_port_num >= I2S_NUM_1) {
     ESP_LOGE(TAG, "Too many I2S Audio components!");
     this->mark_failed();
     return;
@@ -138,7 +138,7 @@ void I2SSettings::dump_i2s_settings() const {
   else{
     esph_log_config(TAG, "I2S-Writer (%s):", init_str.c_str());
   }
-  esph_log_config(TAG, "  sample-rate: %d bits_per_sample: %d", this->sample_rate_, this->bits_per_sample_ );
+  esph_log_config(TAG, "  sample-rate: %d bits_per_sample: %ld", this->sample_rate_, this->bits_per_sample_ );
   esph_log_config(TAG, "  channel_fmt: %d channels: %d", this->channel_fmt_, this->num_of_channels() );
   esph_log_config(TAG, "  use_apll: %s, use_pdm: %s", this->use_apll_ ? "yes": "no", this->pdm_ ? "yes": "no");
 }
@@ -163,8 +163,6 @@ i2s_driver_config_t I2SSettings::get_i2s_cfg() const {
       .use_apll = false,
       .tx_desc_auto_clear = true,
       .fixed_mclk = I2S_PIN_NO_CHANGE,
-      .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,
-      .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,
 #if SOC_I2S_SUPPORTS_TDM
       .chan_mask = I2S_CHANNEL_MONO,
       .total_chan = 0,
