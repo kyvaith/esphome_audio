@@ -163,7 +163,7 @@ i2s_driver_config_t I2SSettings::get_i2s_cfg() const {
       .use_apll = false,
       .tx_desc_auto_clear = true,
       .fixed_mclk = I2S_PIN_NO_CHANGE,
-	  #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 4, 0)
+	  #if ESP_IDF_VERSION <= ESP_IDF_VERSION_VAL(4, 4, 0)
           .mclk_multiple = I2S_MCLK_MULTIPLE_DEFAULT,
           .bits_per_chan = I2S_BITS_PER_CHAN_DEFAULT,
 	  #endif
